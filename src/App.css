@@ -14,5 +14,15 @@
 }
 
 .memo-form {
-  
+  width: 60%;
+  text-align: left;
+  margin: 0 auto;
 }
+
+.memo-list {
+  margin: 0 auto;
+}
+.memo-list li {
+  list-style-type: none;
+}
+

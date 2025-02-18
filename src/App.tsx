@@ -1,28 +1,33 @@
 import { useState } from 'react'
 import './App.css'
+import { getData } from './IDBWrapper.tsx'
 
 function App() {
   
-  const dummyMemos = [
+  const listSubstitute = [
                           {
-                            title: "test1",
-                            url: "https://example.com/",
-                            memo: "this is test"
-                          },
-                          {
-                            title: "test2",
-                            url: "https://example.net/",
-                            memo: ""
+                            title: "タイトル",
+                            url: "",
+                            memo: "Webページについてのメモ",
+                            date: "0"
                           }
                         ];
-  
+    
   const [flameMode, setFlameMode] = useState("a");
-  const [memos, setMemos] = useState(dummyMemos);
+  const [memos, setMemos] = useState(listSubstitute);
   
-  const memoList = memos.map(({title, url}) => {
+  //IndexedDBからデータを取得する
+  getData().then((data: any[]) => {
+      if (data.length > 0) {
+        setMemos(data);
+      } else {
+        setMemos(listSubstitute);
+      }
+    });
+  const memoList = memos.map(({title, url, date}) => {
       return(
-        <li>
-          <a href={url}>{title}</a>
+        <li key={date}>
+          <a className="pure-button" href={url} target="_blank">{title}</a>
         </li>
       );
     });
@@ -58,31 +63,31 @@ function AddMemo({modeSet, mode}) {
 
 function MemoList({memo, mode}) {
   return(
-    <ol className={"memo-form " + (mode == 'a' ? 'do-display' : 'no-display')}>{memo}</ol>
+    <ol className={"memo-list " + (mode == 'a' ? 'do-display' : 'no-display')}>{memo}</ol>
   );
 }
 
 function MemoForm({mode}) {
     return(
-      <form className={"memo-form " + (mode == 'b' ? 'do-display' : 'no-display')}>
-        <div>
-          <label>
-            Webページのタイトル
-            <input type="text" name="title" />
-          </label>
-        </div>
-        <div>
-          <label>
+      <form className={"pure-form pure-form-stacked memo-form " + (mode == 'b' ? '' : 'no-display')}>
+        <fieldset>
+        <label htmlFor="page-title">
+          Webページのタイトル
+        </label>
+        <input type="text" id="page-title" name="title" />
+        <div className="pure-control-group">
+          <label htmlFor="page-url">
             Webページのurl
-            <input type="text" name="url" />
           </label>
+          <input type="text" id="page-url" name="url" />
         </div>
-        <div>
-          <label>
+        <div className="pure-control-group">
+          <label htmlFor="page-memo">
             Webページに関するメモ
-            <textarea name="memo"></textarea>
           </label>
+          <textarea id="page-memo" name="memo"></textarea>
         </div>
+        </fieldset>
       </form>
     );
 }
