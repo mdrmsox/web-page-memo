@@ -7,7 +7,7 @@
  *    title: string -----webページのタイトル
  *    url:   string -----webページのurl
  *    memo:  string -----webページに関するメモ
- *    date:  Date   -----メモした日時
+ *    date:  number   -----メモした日時
  * }
  *********/
 
@@ -61,8 +61,14 @@ export function setData (data: object): Promise<void> {
             const transaction = db.transaction(storeName, 'readwrite');
             const objectStore = transaction.objectStore(storeName);
             objectStore.add(data);
-            transaction.oncomplete = (event: Event) => {resolve()};
-            transaction.onabort = (event: Event) => {reject()};
+            transaction.oncomplete = (event: Event) => {resolve(event)};
+            transaction.onerror = (event: Event) => {
+              let errorMessage: string = "不明なエラー";
+              if(transaction.error) {
+                errorMessage = transaction.error.message;
+              }
+              reject(errorMessage);
+              };
           }
       );
   });
