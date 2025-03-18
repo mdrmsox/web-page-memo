@@ -6,7 +6,6 @@
  * {
  *    title: string -----webページのタイトル
  *    url:   string -----webページのurl
- *    memo:  string -----webページに関するメモ
  *    date:  number   -----メモした日時
  * }
  *********/

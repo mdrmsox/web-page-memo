@@ -1,11 +1,12 @@
-import { useState, useRef } from 'react'
+import { createContext, useContext, useState, useRef, useEffect } from 'react'
 import './App.css'
 import { getData, setData } from './IDBWrapper.tsx'
+
+const MemosContext = createContext(null);
 
 interface MemoType {
   title: string;
   url: string;
-  memo: string;
   date: number;
 }
 
@@ -15,26 +16,24 @@ function App() {
                           {
                             title: "タイトル",
                             url: "",
-                            memo: "Webページについてのメモ",
-                            date: "0"
+                            date: 0
                           }
                         ];
     
   const [flameMode, setFlameMode] = useState<string>("a");
-  const [memos, setMemos] = useState<MemoType[]>(listSubstitute);
+  const [memos, setMemos] = useState<MemoType[]>([]);
   
   //IndexedDBからデータを取得する
-  getData().then((data: any[]) => {
+  useEffect(() => {getData().then((data: any[]) => {
       if (data.length > 0) {
         setMemos(data);
-      } else {
-        setMemos(listSubstitute);
       }
     })
     .catch((e) => {
       setMemos(listSubstitute);
         console.error(e.message);
       });
+    }, []);
   const memoList = memos.map(({title, url, date}) => {
       return(
         <li key={date}>
@@ -42,18 +41,14 @@ function App() {
         </li>
       );
     });
-  
-  function appendMemos(memo: MemoType) {
-    const nextMemos = memos.slice();
-    nextMemos.push(memo);
-    setMemos(nextMemos);
-  }
-  
+    
   return (
     <>
       <PageHeader />
-      <MemoList memo={memoList} />
-      <AddMemo />
+      <MemosContext.Provider value={{memos, setMemos}}>
+        <MemoList memos={memoList} />
+        <AddMemo />
+      </MemosContext.Provider>
     </>
   );
 }
@@ -79,27 +74,34 @@ function AddMemo({appendMemos}) {
   );
 }
 
-function MemoList({memo}) {
+function MemoList({memos}) {
+  const dummyMemo = [
+      <li key={0}>
+        <a className="pure-button" href="" target="_blank">タイトル</a>
+      </li>
+    ];
   return(
-    <ol className={"memo-list"}>{memo}</ol>
+    <ol className={"memo-list"}>{memos.length > 0 ? memos : dummyMemo}</ol>
   );
 }
 
 function MemoForm({isDisplay, changeDisplayForm}) {
   
   const formRef = useRef<HTMLFormElement | null>(null);
-  const dialogRef = useRef<HTMLDiadogElement | null>(null);
+  const dialogRef = useRef<HTMLDialogElement | null>(null);
+  const {memos, setMemos} = useContext(MemosContext);
   
   function addMemo(formData: FormData ) {
     const memoData: MemoType = {
       title: formData.get('title'),
       url: formData.get('url'),
-      memo: formData.get('memo'),
       date: Date.now()
     }
-    setData(memeData).then((event : Event) => {
+    setData(memoData).then((event : Event) => {
       console.log("メモデータ記録完了");
-      
+      const newMemos = memos.slice();
+      newMemos.push(memoData);
+      setMemos(newMemos);
     }).catch((message) => {
       console.error(`メモデータの記録を失敗しました。${message}`);
     });
@@ -109,6 +111,10 @@ function MemoForm({isDisplay, changeDisplayForm}) {
     dialogRef.current?.close();
     formRef.current?.reset();
     changeDisplayForm();
+  }
+  function onCancelCancel(e: MouseEvent<HTMLButtonElement>) {
+    e.preventDefault();
+    dialogRef.current?.showModal();
   }
   function closeDialog(e: MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
@@ -128,26 +134,20 @@ function MemoForm({isDisplay, changeDisplayForm}) {
   }
     return(
     <>
-        <form className={"pure-form pure-form-stacked memo-form " + (isDisplay ? '' : 'no-display')} ref={formRef}>
+        <form action={addMemo} className={"pure-form pure-form-stacked memo-form " + (isDisplay ? '' : 'no-display')} ref={formRef}>
           <fieldset>
           <label htmlFor="page-title">
             Webページのタイトル
           </label>
-          <input type="text" id="page-title" name="title" />
+          <input type="text" id="page-title" name="title" required />
           <div className="pure-control-group">
             <label htmlFor="page-url">
               Webページのurl
             </label>
-            <input type="text" id="page-url" name="url" />
-          </div>
-          <div className="pure-control-group">
-            <label htmlFor="page-memo">
-              Webページに関するメモ
-            </label>
-            <textarea id="page-memo" name="memo"></textarea>
+            <input type="url" id="page-url" name="url" required />
           </div>
           <div className="box-align-container">
-            <button className="pure-button">保存</button><button className="pure-button box-align-right" onClick={() => {dialogRef.current.showModal()}}>キャンセル</button>
+            <button className="pure-button">保存</button><button className="pure-button box-align-right" onClick={onCancelCancel} >キャンセル</button>
           </div>
           </fieldset>
         </form>
