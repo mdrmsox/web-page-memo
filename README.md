@@ -1,50 +1,70 @@
-# React + TypeScript + Vite
+# Webページメモアプリ
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 概要
+このアプリは、IndexedDBとReact、TypeScriptの学習を目的として作成しました。個人的にWebページを記録したいが、ブックマークするほどでもないということがよくあるので、このようなものがあると便利かと考えたのがきっかけです。学習のため、機能は単純にし、WebページのタイトルとURLの記録と削除、そして記録したページを簡単に開けるようにすることを目標としました。また、GitHub Pagesで公開できるように、IndexedDBを使用し、フロントエンドフレームワークのみで作成しました。簡単にWebページを記録できるように、ブックマークレットを使って目的のページを記録する機能を備える予定です。
 
-Currently, two official plugins are available:
+## 主な機能
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- ページの保存: タイトルとURLを保存できます。
+- メモの削除: リストの削除ボタンからメモを削除できます。
+- リスト表示: 保存したページがリスト表示されます。
+- 新しいウィンドウで開く: リストの項目をクリックすると、新しいウィンドウでページが開きます。
+- IndexedDB: データはブラウザのIndexedDBに保存されます。
 
-## Expanding the ESLint configuration
+## 使用技術一覧
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+- React
+- Vite
+- Pure.css
+- IndexedDB
+- TypeScript
 
-- Configure the top-level `parserOptions` property like this:
+## 使い方
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+1. アプリを開きます。
+2. 「メモを追加」ボタンをクリックします。
+3. WebページのタイトルとURLを入力します。
+4. 「保存」ボタンをクリックします。
+5. 保存されたページがリストに追加されます。
+6. リストの項目をクリックすると、新しいウィンドウでページが開きます。
+7. リストの削除ボタンをクリックすると、対応するメモが削除されます。
+
+## ディレクトリ構成
+
+```
+.
+├── LICENSE
+├── README.md
+├── eslint.config.js
+├── index.html
+├── package-lock.json
+├── package.json
+├── public
+│   ├── app-icon.svg
+│   └── vite.svg
+├── src
+│   ├── App.css
+│   ├── App.tsx
+│   ├── CrudeDB.tsx.idea
+│   ├── IDBWrapper.tsx
+│   ├── assets
+│   │   └── react.svg
+│   ├── index.css
+│   ├── main.tsx
+│   └── vite-env.d.ts
+├── tsconfig.app.json
+├── tsconfig.json
+├── tsconfig.node.json
+└── vite.config.ts
+
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+## 今後の機能追加
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+- UIの改善
+- ブックマークレット機能
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+## ライセンス
+
+このアプリはMITライセンスの下で公開されています。詳細については、LICENSEファイルを参照してください。
+

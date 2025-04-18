@@ -1,14 +1,20 @@
-import { createContext, useContext, useState, useRef, useEffect } from 'react'
+import { createContext, useContext, useState, useRef, useEffect, Dispatch, SetStateAction } from 'react'
 import './App.css'
-import { getData, setData } from './IDBWrapper.tsx'
-
-const MemosContext = createContext(null);
+import { getData, setData, deleteData } from './IDBWrapper.tsx'
 
 interface MemoType {
   title: string;
   url: string;
   date: number;
 }
+type DeleteMemo = (dbKey: number) => void;
+type MemosContextType ={
+  memos : MemoType[];
+  setMemos : Dispatch<SetStateAction<MemoType[]>>;
+  deleteMemo : DeleteMemo;
+};
+const MemosContext = createContext<MemosContextType | null>(null);
+
 
 function App() {
   
@@ -20,7 +26,6 @@ function App() {
                           }
                         ];
     
-  const [flameMode, setFlameMode] = useState<string>("a");
   const [memos, setMemos] = useState<MemoType[]>([]);
   
   //IndexedDBからデータを取得する
@@ -34,19 +39,20 @@ function App() {
         console.error(e.message);
       });
     }, []);
-  const memoList = memos.map(({title, url, date}) => {
-      return(
-        <li key={date}>
-          <a className="pure-button" href={url} target="_blank">{title}</a>
-        </li>
-      );
-    });
-    
+    function deleteMemo(dbKey: number) {
+      deleteData(dbKey).then(() => {
+        const modifiedMemo: MemoType[] = memos.filter((element: MemoType) => element.date != dbKey);
+        setMemos(modifiedMemo);
+      }).catch((message : string) => {
+        console.error("メモの削除に失敗しました。%s", message);
+      });
+    }
+   
   return (
     <>
       <PageHeader />
-      <MemosContext.Provider value={{memos, setMemos}}>
-        <MemoList memos={memoList} />
+      <MemosContext.Provider value={{memos, setMemos, deleteMemo}}>
+        <MemoList />
         <AddMemo />
       </MemosContext.Provider>
     </>
@@ -56,12 +62,12 @@ function App() {
 function PageHeader() {
   return(
     <header>
-    <h1>Web page Memo</h1>
+    <h1>Webページメモ</h1>
     </header>
   );
 }
 
-function AddMemo({appendMemos}) {
+function AddMemo() {
   const [displayForm, setDisplayForm] = useState<boolean>(false);
   function changeDisplayForm() {
     setDisplayForm(displayForm ? false : true);
@@ -74,30 +80,48 @@ function AddMemo({appendMemos}) {
   );
 }
 
-function MemoList({memos}) {
-  const dummyMemo = [
-      <li key={0}>
-        <a className="pure-button" href="" target="_blank">タイトル</a>
-      </li>
-    ];
+function MemoList() {
+
+  const context = useContext(MemosContext);
+  if (!context) {
+   throw new Error('MemoContextが提供されていません。');
+ }
+  const {memos, deleteMemo} = context;
+  const memoList = memos.map(({title, url, date}) => {
+      return(
+        <li key={date}>
+          <a className="pure-button" href={url} target="_blank">{title}</a>
+          <button className="delete-button pure-button" onClick={() => {return deleteMemo(date)}}>削除</button>
+        </li>
+      );
+    });
+
   return(
-    <ol className={"memo-list"}>{memos.length > 0 ? memos : dummyMemo}</ol>
+    <div className="list-container"><ol className={"memo-list"}>{memoList}</ol></div>
   );
 }
 
-function MemoForm({isDisplay, changeDisplayForm}) {
+type MemoFormProps = {
+  isDisplay : boolean;
+  changeDisplayForm : () => void;
+}
+function MemoForm({isDisplay, changeDisplayForm} : MemoFormProps) {
   
   const formRef = useRef<HTMLFormElement | null>(null);
   const dialogRef = useRef<HTMLDialogElement | null>(null);
-  const {memos, setMemos} = useContext(MemosContext);
-  
-  function addMemo(formData: FormData ) {
+  const context = useContext(MemosContext);
+  if (!context) {
+   throw new Error('MemoContextが提供されていません。');
+ }
+   const {memos, setMemos} = context;
+
+  function addMemo(formData: FormData) {
     const memoData: MemoType = {
-      title: formData.get('title'),
-      url: formData.get('url'),
+      title: formData.get('title')!.toString(),
+      url: formData.get('url')!.toString(),
       date: Date.now()
     }
-    setData(memoData).then((event : Event) => {
+    setData(memoData).then(() => {
       console.log("メモデータ記録完了");
       const newMemos = memos.slice();
       newMemos.push(memoData);
@@ -105,23 +129,29 @@ function MemoForm({isDisplay, changeDisplayForm}) {
     }).catch((message) => {
       console.error(`メモデータの記録を失敗しました。${message}`);
     });
+    changeDisplayForm();
   }
-  function onCancel(e: MouseEvent<HTMLButtonElement>) {
+  function onCancel(e: React.MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
     dialogRef.current?.close();
     formRef.current?.reset();
     changeDisplayForm();
   }
-  function onCancelCancel(e: MouseEvent<HTMLButtonElement>) {
+  function onCancelCancel(e: React.MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
     dialogRef.current?.showModal();
   }
-  function closeDialog(e: MouseEvent<HTMLButtonElement>) {
+  function closeDialog(e: React.MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
     dialogRef.current?.close();
   }
-  
-  function ConfirmDialog({onCancel, closeDialog}) {
+
+  type ConfirmDialogProps = {
+    onCancel : (e: React.MouseEvent<HTMLButtonElement>) => void;
+    closeDialog : (e: React.MouseEvent<HTMLButtonElement>) => void;
+  } 
+
+  function ConfirmDialog({onCancel, closeDialog}: ConfirmDialogProps) {
     return (
       <dialog ref={dialogRef}>
         <p>キャンセルしますか？</p>

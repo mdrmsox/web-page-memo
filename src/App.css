@@ -22,18 +22,47 @@
 .memo-form textarea {
   width: 100%;
 }
-.memo-list {
+.list-container {
   margin: 0 auto;
+  width: 300px;
+}
+.memo-list {
+  margin: 0;
+  padding: 0;
 }
 .memo-list li {
+  display: grid;
+  grid-template-columns: 240px 60px;
+  box-sizing: border-box;
+  background-color: #c6f4ff;
+  border-radius: 4px;
   list-style-type: none;
+  height: 3em;
+  line-height: 3em;
+  width: 100%;
+  margin: 0.5em 0;
+  text-overflow: ellipsis;
+  text-align: left;
+  overflow: hidden;
 }
-
+.memo-list li div{
+  overflow: hidden;
+}
+.memo-list li a {
+  text-decoration: none;
+  color: #769299;
+  background-color: inherit;
+}
+.delete-button {
+  background-color: #FFD1C6;
+  color: #769299;
+  border-radius: 4px;
+}
 .form-tray {
   max-width: 1280px;
   width: 100%;
   margin: 0 auto;
-  bottom: 0;
+  bottom: 60px;
   position: absolute;
 }
 

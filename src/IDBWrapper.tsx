@@ -24,7 +24,7 @@ function dbInit (): Promise<IDBDatabase> {
     }
     request.onupgradeneeded = (event: IDBVersionChangeEvent) => {
       const db = (event.target as IDBRequest).result as IDBDatabase;
-      const objStore = db.createObjectStore(storeName, { keyPath: 'date' });
+      db.createObjectStore(storeName, { keyPath: 'date' });
     }
     request.onsuccess = (event: Event) => {
       const db = (event.target as IDBRequest).result as IDBDatabase;
@@ -60,13 +60,25 @@ export function setData (data: object): Promise<void> {
             const transaction = db.transaction(storeName, 'readwrite');
             const objectStore = transaction.objectStore(storeName);
             objectStore.add(data);
-            transaction.oncomplete = (event: Event) => {resolve(event)};
-            transaction.onerror = (event: Event) => {
-              let errorMessage: string = "不明なエラー";
-              if(transaction.error) {
-                errorMessage = transaction.error.message;
-              }
-              reject(errorMessage);
+            transaction.oncomplete = () => {resolve()};
+            transaction.onerror = () => {
+              reject(`トランザクションエラー： ${transaction.error}`);
+              };
+          }
+      );
+  });
+}
+
+export function deleteData (date: number): Promise<void> {
+  return new Promise((resolve, reject) => {
+      dbInit().then(
+        (db) => {
+            const transaction = db.transaction(storeName, 'readwrite');
+            const objectStore = transaction.objectStore(storeName);
+            objectStore.delete(date);
+            transaction.oncomplete = () => {resolve()};
+            transaction.onerror = () => {
+              reject(`トランザクションエラー： ${transaction.error}`);
               };
           }
       );
