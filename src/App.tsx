@@ -63,8 +63,25 @@ function PageHeader() {
   return(
     <header>
     <h1>Webページメモ</h1>
+    <HowToUse />
     </header>
   );
+}
+
+function HowToUse() {
+  const [isVisible, setIsVisible] = useState<boolean>(false);
+  return (
+    <article className="how-to-use-frame">
+      <button className="pure-button" onClick={() => setIsVisible(true)}>使い方</button>
+      <div className={`how-to-use-block ${isVisible ? 'visible' : ''}`}>
+        <div className="close-button"><span className="pure-button" onClick={() => setIsVisible(false)}>&times;</span></div>
+        <h3>使い方</h3>
+        <p>WebページのタイトルとURLを記録し、リストとして表示します。</p>
+        <p>リストをクリックすると記録したページを表示します。</p>
+        <p>削除ボタンでその項目を削除します。</p>
+      </div>
+    </article>
+  )
 }
 
 function AddMemo() {
