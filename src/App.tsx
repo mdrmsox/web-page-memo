@@ -7,6 +7,10 @@ interface MemoType {
   url: string;
   date: number;
 }
+interface DefaultFormValuesType {
+  title: string;
+  url: string;
+}
 type DeleteMemo = (dbKey: number) => void;
 type MemosContextType ={
   memos : MemoType[];
@@ -76,9 +80,33 @@ function HowToUse() {
       <div className={`how-to-use-block ${isVisible ? 'visible' : ''}`}>
         <div className="close-button"><span className="pure-button" onClick={() => setIsVisible(false)}>&times;</span></div>
         <h3>使い方</h3>
-        <p>WebページのタイトルとURLを記録し、リストとして表示します。</p>
-        <p>リストをクリックすると記録したページを表示します。</p>
-        <p>削除ボタンでその項目を削除します。</p>
+        <p>このアプリはWebページのタイトルとURLを記録し、リスト形式で表示します。</p>
+        <ol>
+          <li>
+            <h4>リストの表示</h4>
+            <p>リスト内の項目をクリックすると、記録したWebページが表示されます。</p>
+          </li>
+          <li>
+            <h4>項目の削除</h4>
+            <p>不要な項目は削除ボタンをクリックすることで簡単に削除できます。</p>
+          </li>
+          <li>
+            <h4>ブックマークレットの活用</h4>
+            <p>ブックマークレットを使用するとWebページの登録がさらに簡単になります。</p>
+            <p>登録したいWebページでブックマークレットを実行すると、そのページのタイトルとURLが自動的に入力された状態でアプリが表示されます。あとは「保存」ボタンを押すだけで、そのWebページがアプリに登録されます。</p>
+            <h5>ブックマークレットの設定</h5>
+            <p>「ブックマークマネージャ」や「ブックマークを管理」から「新しいブックマークを追加」を選択し、タイトルに「Webページメモブックマークレット」などお好みの名前をつけます。URL欄に以下のJavaScriptコードをそのまま入力してください。</p>
+            <div className="code-box">
+              <button onClick={() => {
+                (document.getElementById('bookmarklet-code') as HTMLTextAreaElement)?.select();
+                document.execCommand('copy');
+               }} >
+                JavaScriptをコピー
+              </button>
+              <textarea id="bookmarklet-code" defaultValue={'javascript:(function(){window.location.href = "' + window.location.href + '?title="+encodeURIComponent(document.title)+"%26url="+encodeURIComponent(location.href)})()'} readOnly />
+           </div>
+          </li>
+        </ol>
       </div>
     </article>
   )
@@ -86,12 +114,27 @@ function HowToUse() {
 
 function AddMemo() {
   const [displayForm, setDisplayForm] = useState<boolean>(false);
+  const [defaultFormValues, setDefaultFormValues] = useState<DefaultFormValuesType>({
+    title: "",
+    url: ""
+  });
+  useEffect(() => {
+    const currentLocation = window.location;
+    if (currentLocation.search != '') {
+      const params = new URLSearchParams(currentLocation.search);
+      setDefaultFormValues({
+        title: decodeURI(params.get("title") ?? ""),
+        url: decodeURI(params.get("url") ?? "")
+      });
+      setDisplayForm(true);
+    }
+  }, [setDefaultFormValues, setDisplayForm]);
   function changeDisplayForm() {
     setDisplayForm(displayForm ? false : true);
   }
   return(
     <div className="form-tray">
-      <MemoForm isDisplay={displayForm} changeDisplayForm={changeDisplayForm} />
+      <MemoForm isDisplay={displayForm} changeDisplayForm={changeDisplayForm} defaultFormValues={defaultFormValues} />
       <button className={"pure-button " + (displayForm ? 'no-display' : '')} onClick={() => {changeDisplayForm()}}>メモを追加</button>
     </div>
   );
@@ -121,8 +164,9 @@ function MemoList() {
 type MemoFormProps = {
   isDisplay : boolean;
   changeDisplayForm : () => void;
+  defaultFormValues : DefaultFormValuesType;
 }
-function MemoForm({isDisplay, changeDisplayForm} : MemoFormProps) {
+function MemoForm({isDisplay, changeDisplayForm, defaultFormValues} : MemoFormProps) {
   
   const formRef = useRef<HTMLFormElement | null>(null);
   const dialogRef = useRef<HTMLDialogElement | null>(null);
@@ -186,12 +230,12 @@ function MemoForm({isDisplay, changeDisplayForm} : MemoFormProps) {
           <label htmlFor="page-title">
             Webページのタイトル
           </label>
-          <input type="text" id="page-title" name="title" required />
+          <input type="text" id="page-title" name="title" defaultValue={defaultFormValues.title} required />
           <div className="pure-control-group">
             <label htmlFor="page-url">
               Webページのurl
             </label>
-            <input type="url" id="page-url" name="url" required />
+            <input type="url" id="page-url" name="url" defaultValue={defaultFormValues.url} required />
           </div>
           <div className="box-align-container">
             <button className="pure-button">保存</button><button className="pure-button box-align-right" onClick={onCancelCancel} >キャンセル</button>
