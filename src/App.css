@@ -67,6 +67,7 @@
 
 .form-tray {
   background-color: #ffffff;
+  color: #303030;
   max-width: 1280px;
   width: 100%;
   margin: 0 auto;
@@ -122,6 +123,7 @@
  padding: 20px;
  box-sizing: border-box;
  background-color: rgba(255, 255, 255, 1);
+ color: #303030;
  text-align: left;
  overflow: auto;
  z-index:3;
@@ -138,6 +140,7 @@
 
 .code-box textarea {
   background-color: inherit;
+  color: #303030;
   border: none;
   width: 100%;
   height: 3em;
