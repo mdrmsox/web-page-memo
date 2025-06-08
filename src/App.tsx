@@ -7,7 +7,7 @@ interface MemoType {
   url: string;
   date: number;
 }
-interface DefaultFormValuesType {
+interface FormValuesType {
   title: string;
   url: string;
 }
@@ -18,7 +18,6 @@ type MemosContextType ={
   deleteMemo : DeleteMemo;
 };
 const MemosContext = createContext<MemosContextType | null>(null);
-
 
 function App() {
   
@@ -59,6 +58,7 @@ function App() {
         <MemoList />
         <AddMemo />
       </MemosContext.Provider>
+      <PageFooter />
     </>
   );
 }
@@ -69,6 +69,15 @@ function PageHeader() {
     <h1>Webページメモ</h1>
     <HowToUse />
     </header>
+  );
+}
+
+function PageFooter() {
+  return(
+    <footer className="page-footer">
+      <p>Copyright &copy; 2025 mdrmsox</p>
+      <p>GitHub: <a href="https://github.com/mdrmsox">https://github.com/mdrmsox</a></p>
+    </footer>
   );
 }
 
@@ -103,7 +112,7 @@ function HowToUse() {
                }} >
                 JavaScriptをコピー
               </button>
-              <textarea id="bookmarklet-code" defaultValue={'javascript:(function(){window.location.href = "' + window.location.href + '?title="+encodeURIComponent(document.title)+"%26url="+encodeURIComponent(location.href)})()'} readOnly />
+              <textarea id="bookmarklet-code" defaultValue={'javascript:(function(){window.location.href = "' + window.location.href.substring(0, window.location.href.search("\\?") == -1 ? window.location.href.length : window.location.href.search("\\?")) + '?title="+encodeURIComponent(document.title)+"%26url="+encodeURIComponent(location.href)})()'} readOnly />
            </div>
           </li>
         </ol>
@@ -114,28 +123,33 @@ function HowToUse() {
 
 function AddMemo() {
   const [displayForm, setDisplayForm] = useState<boolean>(false);
-  const [defaultFormValues, setDefaultFormValues] = useState<DefaultFormValuesType>({
+  const [formValues, setFormValues] = useState<FormValuesType>({
     title: "",
     url: ""
   });
   useEffect(() => {
     const currentLocation = window.location;
-    if (currentLocation.search != '') {
+    if (currentLocation.search) {
       const params = new URLSearchParams(currentLocation.search);
-      setDefaultFormValues({
+      setFormValues({
         title: decodeURI(params.get("title") ?? ""),
         url: decodeURI(params.get("url") ?? "")
       });
       setDisplayForm(true);
-    }
-  }, [setDefaultFormValues, setDisplayForm]);
+    } 
+  }, [setFormValues, setDisplayForm]);
   function changeDisplayForm() {
     setDisplayForm(displayForm ? false : true);
   }
   return(
     <div className="form-tray">
-      <MemoForm isDisplay={displayForm} changeDisplayForm={changeDisplayForm} defaultFormValues={defaultFormValues} />
-      <button className={"pure-button " + (displayForm ? 'no-display' : '')} onClick={() => {changeDisplayForm()}}>メモを追加</button>
+      <div className={"form-tab " + (displayForm ? '' : 'visible')} onClick={() => {changeDisplayForm()}} >
+        <p><span className="material-symbols-outlined">
+        keyboard_double_arrow_up
+        </span></p>
+        <p>メモを追加</p>
+      </div>
+      <MemoForm displayForm={displayForm} changeDisplayForm={changeDisplayForm} formValues={formValues} setFormValues={setFormValues} />
     </div>
   );
 }
@@ -162,11 +176,12 @@ function MemoList() {
 }
 
 type MemoFormProps = {
-  isDisplay : boolean;
+  displayForm : boolean;
   changeDisplayForm : () => void;
-  defaultFormValues : DefaultFormValuesType;
+  formValues : FormValuesType;
+  setFormValues : Dispatch<SetStateAction<FormValuesType>>;
 }
-function MemoForm({isDisplay, changeDisplayForm, defaultFormValues} : MemoFormProps) {
+function MemoForm({displayForm, changeDisplayForm, formValues, setFormValues} : MemoFormProps) {
   
   const formRef = useRef<HTMLFormElement | null>(null);
   const dialogRef = useRef<HTMLDialogElement | null>(null);
@@ -190,12 +205,19 @@ function MemoForm({isDisplay, changeDisplayForm, defaultFormValues} : MemoFormPr
     }).catch((message) => {
       console.error(`メモデータの記録を失敗しました。${message}`);
     });
+    setFormValues({
+      title: "",
+      url: ""
+    });
     changeDisplayForm();
   }
   function onCancel(e: React.MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
     dialogRef.current?.close();
-    formRef.current?.reset();
+    setFormValues({
+      title: "",
+      url: ""
+    });
     changeDisplayForm();
   }
   function onCancelCancel(e: React.MouseEvent<HTMLButtonElement>) {
@@ -225,17 +247,17 @@ function MemoForm({isDisplay, changeDisplayForm, defaultFormValues} : MemoFormPr
   }
     return(
     <>
-        <form action={addMemo} className={"pure-form pure-form-stacked memo-form " + (isDisplay ? '' : 'no-display')} ref={formRef}>
+        <form action={addMemo} className={"pure-form pure-form-stacked memo-form " + (displayForm ? 'visible' : '')} ref={formRef}>
           <fieldset>
           <label htmlFor="page-title">
             Webページのタイトル
           </label>
-          <input type="text" id="page-title" name="title" defaultValue={defaultFormValues.title} required />
+          <input type="text" id="page-title" name="title" value={formValues.title} onChange={e => {setFormValues({title: e.target.value, url: formValues.url})}} required />
           <div className="pure-control-group">
             <label htmlFor="page-url">
               Webページのurl
             </label>
-            <input type="url" id="page-url" name="url" defaultValue={defaultFormValues.url} required />
+            <input type="url" id="page-url" name="url" value={formValues.url} onChange={e => {setFormValues({title: formValues.title, url: e.target.value})}} required />
           </div>
           <div className="box-align-container">
             <button className="pure-button">保存</button><button className="pure-button box-align-right" onClick={onCancelCancel} >キャンセル</button>
